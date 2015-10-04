@@ -8,6 +8,7 @@ import hashlib
 import shutil
 import traceback
 import glob
+import ID3
 
 
 def _usage():
