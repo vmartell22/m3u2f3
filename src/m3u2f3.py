@@ -28,6 +28,7 @@ def ProcessPlayList(ps_PlayList="", ps_TargetPath="./"):
     # Let's rock
     for s_MusicFile in MUSIC_FILES:
 
+
         s_FullFile = os.path.abspath( s_MusicFile )
         print "Processing: %s" %( s_FullFile)
         s_Name, s_Ext = os.path.splitext(s_FullFile)
@@ -37,6 +38,12 @@ def ProcessPlayList(ps_PlayList="", ps_TargetPath="./"):
         print "New Filename: %s" %(s_NewFilename)
 
         try:
+
+            # New dir ?
+            id3_fullFile = ID3(s_FullFile)
+            pprint.pprint(id3_full_file)
+            s_TargetDir = "%s/%s" % (ps_TargetPath,id3_fullFile['ALBUM'])
+            
 
             shutil.copy2( s_FullFile , "%s/"%(ps_TargetPath) )
             os.rename( "%s/%s%s"%(ps_TargetPath,s_Name,s_Ext),  "%s/%s"%(ps_TargetPath,s_NewFilename)  )
