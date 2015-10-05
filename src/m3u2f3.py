@@ -8,7 +8,7 @@ import hashlib
 import shutil
 import traceback
 import glob
-import ID3
+from ID3 import *
 
 
 def _usage():
@@ -41,14 +41,14 @@ def ProcessPlayList(ps_PlayList="", ps_TargetPath="./"):
 
             # New dir ?
             id3_fullFile = ID3(s_FullFile)
-            pprint.pprint(id3_full_file)
-            s_TargetDir = "%s/%s" % (ps_TargetPath,hashlib.md5(id3_fullFile['ALBUM']).hexdigest())
+            pprint.pprint(id3_fullFile)
+            s_TargetDir = "%s/%s" % (ps_TargetPath,hashlib.md5(id3_fullFile.album).hexdigest())
 
             if not os.path.exists(s_TargetDir):
                 os.makedirs(s_TargetDir)
 
             shutil.copy2( s_FullFile , "%s/"%(s_TargetDir) )
-            os.rename( "%s/%s%s"%(ps_TargetPath,s_Name,s_Ext),  "%s/%s"%(ps_TargetPath,s_NewFilename)  )
+            os.rename( "%s/%s%s"%(ps_TargetPath,s_Name,s_Ext),  "%s/%s"%(s_TargetDir,s_NewFilename)  )
 
         except (shutil.Error, IOError) as e:
 
