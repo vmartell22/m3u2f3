@@ -44,9 +44,8 @@ def ProcessPlayList(ps_PlayList="", ps_TargetPath="./"):
             pprint.pprint(id3_full_file)
             s_TargetDir = "%s/%s" % (ps_TargetPath,id3_fullFile['ALBUM'])
 
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-
+            if not os.path.exists(s_TargetDir):
+                os.makedirs(s_TargetDir)
 
             shutil.copy2( s_FullFile , "%s/"%(ps_TargetPath) )
             os.rename( "%s/%s%s"%(ps_TargetPath,s_Name,s_Ext),  "%s/%s"%(ps_TargetPath,s_NewFilename)  )
