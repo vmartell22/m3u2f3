@@ -8,7 +8,7 @@ import hashlib
 import shutil
 import traceback
 import glob
-from mutagen import id3, File, m4a
+from mutagen import id3, File, m4a, aiff
 
 def _usage():
     s_help = "Usage:  dir2album source_directory target_directory\n"
@@ -26,48 +26,65 @@ def ProcessDirectory(ps_SourcePath="", ps_TargetPath="./"):
     # Let's rock
     for s_MusicFile in MUSIC_FILES:
 
-        #print s_MusicFile
         s_FullFile = os.path.abspath( "%s/%s" %(ps_SourcePath,s_MusicFile) )
-        #print "Processing: %s" %( s_FullFile)
+        print "Processing: %s" %( s_FullFile)
         s_Name, s_Ext = os.path.splitext(s_FullFile)
-        s_Name = os.path.basename(s_Name)
-        s_NewFilename = "%s%s" %(hashlib.md5(s_FullFile).hexdigest(),s_Ext)
-        #print "Process Name: %s/%s" %(ps_TargetPath,s_Name)
-        #print "New Filename: %s" %(s_NewFilename)
 
         try:
+
+            s_Album         = ""
+            bin_coverArt    = None
 
             if s_Ext == ".m4a":
 
                 m4a_fullFile = m4a.M4A(s_FullFile)
-                print m4a_fullFile['\xa9alb'].encode("utf-8", "ignore")
-
+                s_Album = m4a_fullFile['\xa9alb'].encode("utf-8", "ignore")
+                bin_coverArt  = m4a_fullFile['covr']
 
             elif s_Ext == ".mp3":
 
                 id3_fullFile = id3.ID3(s_FullFile)
-                print id3_fullFile['TALB']
+                s_Album = id3_fullFile['TALB'].text[0]
+                for k,v in id3_fullFile.items():
+                    if k.startswith("APIC"):
+                        s_key=k
+                        break
+                bin_coverArt  = id3_fullFile[s_key].data
 
+            elif s_Ext == ".aif":
+
+                id3_fullFile = aiff.AIFF(s_FullFile)
+                s_Album = id3_fullFile.tags['TALB'].text[0]
+                for k,v in id3_fullFile.tags.items():
+                    if k.startswith("APIC"):
+                        s_key=k
+                        break
+                bin_coverArt  = id3_fullFile.tags[s_key].data
+
+            elif s_Ext == ".dsf":
+                continue
             else:
-                print "unknown extension"
-                print s_Ext
+                print "Unknown extension!!!"
+                print s_fullFile
                 exit()
 
-            #pprint.pprint(id3_fullFile)
-            #s_TargetDir = "%s/%s" % (ps_TargetPath,hashlib.md5(id3_fullFile.album).hexdigest())
+
+            s_TargetDir = "%s/%s" % (ps_TargetPath,hashlib.md5(s_Album).hexdigest())
+
+            print "Album: %s Targedir: %s" %(s_Album,s_TargetDir)
 
             # New dir ?
-            #if not os.path.exists(s_TargetDir):
-            #    os.makedirs(s_TargetDir)
+            if not os.path.exists(s_TargetDir):
+                os.makedirs(s_TargetDir)
+                with open("%s/folder.jpg"%(s_TargetDir), 'wb') as file_coverArt:
+                    file_coverArt.write(bin_coverArt)
+            shutil.copy2( s_FullFile , "%s/"%(s_TargetDir) )
 
-            #shutil.copy2( s_FullFile , "%s/"%(s_TargetDir) )
-            #os.rename( "%s/%s%s"%(ps_TargetPath,s_Name,s_Ext),  "%s/%s"%(s_TargetDir,s_NewFilename)  )
 
         except (shutil.Error, IOError) as e:
 
             print "Failed to process: %s - New File: %s" %(s_FullFile,s_NewFilename)
             print(traceback.format_exc())
-            pass
 
 
 
