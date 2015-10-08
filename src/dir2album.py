@@ -58,7 +58,7 @@ def ProcessDirectory(ps_SourcePath="", ps_TargetPath="./"):
                             s_coverArtType = "png"
                         break
 
-            elif s_Ext == ".aif":
+            elif s_Ext == ".aif" or s_Ext == ".aiff":
 
                 id3_fullFile = aiff.AIFF(s_FullFile)
                 s_Album = id3_fullFile.tags['TALB'].text[0]
@@ -73,7 +73,7 @@ def ProcessDirectory(ps_SourcePath="", ps_TargetPath="./"):
                 continue
             else:
                 print "Unknown extension!!!"
-                print s_fullFile
+                print s_FullFile
                 exit()
 
 
