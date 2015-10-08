@@ -8,7 +8,7 @@ import hashlib
 import shutil
 import traceback
 import glob
-from mutagen import id3, File, m4a, aiff
+from mutagen import id3, File, m4a, aiff, mp4
 
 def _usage():
     s_help = "Usage:  dir2album source_directory target_directory\n"
@@ -34,12 +34,18 @@ def ProcessDirectory(ps_SourcePath="", ps_TargetPath="./"):
 
             s_Album         = ""
             bin_coverArt    = None
+            s_coverArtType  = "jpg"
 
             if s_Ext == ".m4a":
 
-                m4a_fullFile = m4a.M4A(s_FullFile)
-                s_Album = m4a_fullFile['\xa9alb'].encode("utf-8", "ignore")
-                bin_coverArt  = m4a_fullFile['covr']
+                m4a_fullFile = mp4.MP4(s_FullFile)
+                #s_Album = m4a_fullFile.tags['\xa9alb'][0].encode("utf-8", "ignore")
+                s_Album = m4a_fullFile.tags['\xa9alb'][0]
+
+                if 'covr' in m4a_fullFile.tags:
+                    bin_coverArt  = m4a_fullFile['covr'][0]
+                    if m4a_fullFile['covr'][0].imageformat == m4a.M4ACover.FORMAT_PNG:
+                        s_coverArtType = "png"
 
             elif s_Ext == ".mp3":
 
@@ -47,9 +53,10 @@ def ProcessDirectory(ps_SourcePath="", ps_TargetPath="./"):
                 s_Album = id3_fullFile['TALB'].text[0]
                 for k,v in id3_fullFile.items():
                     if k.startswith("APIC"):
-                        s_key=k
+                        bin_coverArt  = id3_fullFile[k].data
+                        if "png" in id3_fullFile[k].mime:
+                            s_coverArtType = "png"
                         break
-                bin_coverArt  = id3_fullFile[s_key].data
 
             elif s_Ext == ".aif":
 
@@ -57,9 +64,10 @@ def ProcessDirectory(ps_SourcePath="", ps_TargetPath="./"):
                 s_Album = id3_fullFile.tags['TALB'].text[0]
                 for k,v in id3_fullFile.tags.items():
                     if k.startswith("APIC"):
-                        s_key=k
+                        bin_coverArt  = id3_fullFile.tags[k].data
+                        if "png" in id3_fullFile[k].mime:
+                            s_coverArtType = "png"
                         break
-                bin_coverArt  = id3_fullFile.tags[s_key].data
 
             elif s_Ext == ".dsf":
                 continue
@@ -69,21 +77,24 @@ def ProcessDirectory(ps_SourcePath="", ps_TargetPath="./"):
                 exit()
 
 
-            s_TargetDir = "%s/%s" % (ps_TargetPath,hashlib.md5(s_Album).hexdigest())
+            s_TargetDir = "%s/%s" % (ps_TargetPath,hashlib.md5(s_Album.encode("utf-8","ignore")).hexdigest())
 
             print "Album: %s Targedir: %s" %(s_Album,s_TargetDir)
 
             # New dir ?
             if not os.path.exists(s_TargetDir):
+
                 os.makedirs(s_TargetDir)
-                with open("%s/folder.jpg"%(s_TargetDir), 'wb') as file_coverArt:
-                    file_coverArt.write(bin_coverArt)
+                if bin_coverArt is not None:
+                    with open("%s/folder.%s"%(s_TargetDir,s_coverArtType), 'wb') as file_coverArt:
+                        file_coverArt.write(bin_coverArt)
+
             shutil.copy2( s_FullFile , "%s/"%(s_TargetDir) )
 
 
         except (shutil.Error, IOError) as e:
 
-            print "Failed to process: %s - New File: %s" %(s_FullFile,s_NewFilename)
+            print "Failed to process: %s" %(s_FullFile)
             print(traceback.format_exc())
 
 
