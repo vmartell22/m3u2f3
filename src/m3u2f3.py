@@ -8,7 +8,7 @@ import hashlib
 import shutil
 import traceback
 import glob
-from mutagen import id3, File
+from mutagen import id3, File, m4a, aiff, mp4
 
 def _usage():
     s_help = "Usage:  m3u2f3 playlist_name target_directory\n"
@@ -16,6 +16,87 @@ def _usage():
     s_help += "\n%5s,\t%s\t\t\t%s\n\n" % ("-h", "--help", "display this help and exit")
 
     print s_help
+
+
+def ProcessFile(ps_TargetPath, ps_MusicFile):
+
+    # Let's rock
+    s_FullFile = os.path.abspath(ps_MusicFile)
+    print "Processing: %s" %( s_FullFile)
+    s_Name, s_Ext = os.path.splitext(s_FullFile)
+    _, s_Name = os.path.split(s_Name)
+    print s_Name
+    s_NewFilename = "%s%s" %(hashlib.md5(s_FullFile).hexdigest(),s_Ext)
+
+    try:
+
+        s_Album         = ""
+        bin_coverArt    = None
+        s_coverArtType  = "jpg"
+
+        if s_Ext == ".m4a" or s_Ext == ".mp4":
+
+            m4a_fullFile = mp4.MP4(s_FullFile)
+            #s_Album = m4a_fullFile.tags['\xa9alb'][0].encode("utf-8", "ignore")
+            s_Album = m4a_fullFile.tags['\xa9alb'][0]
+
+            if 'covr' in m4a_fullFile.tags:
+                bin_coverArt  = m4a_fullFile['covr'][0]
+                if m4a_fullFile['covr'][0].imageformat == m4a.M4ACover.FORMAT_PNG:
+                    s_coverArtType = "png"
+
+        elif s_Ext == ".mp3":
+
+            id3_fullFile = id3.ID3(s_FullFile)
+            s_Album = id3_fullFile['TALB'].text[0]
+            for k,v in id3_fullFile.items():
+                if k.startswith("APIC"):
+                    bin_coverArt  = id3_fullFile[k].data
+                    if "png" in id3_fullFile[k].mime:
+                        s_coverArtType = "png"
+                    break
+
+        elif s_Ext == ".aif" or s_Ext == ".aiff":
+
+            id3_fullFile = aiff.AIFF(s_FullFile)
+            s_Album = id3_fullFile.tags['TALB'].text[0]
+            for k,v in id3_fullFile.tags.items():
+                if k.startswith("APIC"):
+                    bin_coverArt  = id3_fullFile.tags[k].data
+                    if "png" in id3_fullFile[k].mime:
+                        s_coverArtType = "png"
+                    break
+
+        elif s_Ext == ".dsf":
+            print "Ignoring DSF extension"
+        else:
+            print "Unknown extension!!!"
+            print s_FullFile
+            exit()
+
+
+        s_TargetDir = "%s/%s" % (ps_TargetPath,hashlib.md5(s_Album.encode("utf-8","ignore")).hexdigest())
+
+        print "Album: %s Targedir: %s" %(s_Album,s_TargetDir)
+
+        # New dir ?
+        if not os.path.exists(s_TargetDir):
+
+            os.makedirs(s_TargetDir)
+            if bin_coverArt is not None:
+                with open("%s/folder.%s"%(s_TargetDir,s_coverArtType), 'wb') as file_coverArt:
+                    file_coverArt.write(bin_coverArt)
+
+        shutil.copy2( s_FullFile , "%s/"%(s_TargetDir) )
+        os.rename( "%s/%s%s"%(s_TargetDir,s_Name,s_Ext),  "%s/%s"%(s_TargetDir,s_NewFilename)  )
+
+
+    except (shutil.Error, IOError) as e:
+
+        print "Failed to process: %s" %(s_FullFile)
+        print(traceback.format_exc())
+
+
 
 
 def ProcessPlayList(ps_PlayList="", ps_TargetPath="./"):
@@ -27,39 +108,8 @@ def ProcessPlayList(ps_PlayList="", ps_TargetPath="./"):
     # Let's rock
     for s_MusicFile in MUSIC_FILES:
 
+        s_FullFile = ProcessFile(ps_TargetPath, s_MusicFile )
 
-        s_FullFile = os.path.abspath( s_MusicFile )
-        print "Processing: %s" %( s_FullFile)
-        s_Name, s_Ext = os.path.splitext(s_FullFile)
-        s_Name = os.path.basename(s_Name)
-        s_NewFilename = "%s%s" %(hashlib.md5(s_FullFile).hexdigest(),s_Ext)
-        print "Process Name: %s/%s" %(ps_TargetPath,s_Name)
-        print "New Filename: %s" %(s_NewFilename)
-
-        try:
-
-            id3_fullFile = id3.ID3(s_FullFile)
-
-            for k, v in id3_fullFile.items():
-                print "KEY: %s Value: %s" %(k,v)
-
-            exit()
-
-            pprint.pprint(id3_fullFile)
-            s_TargetDir = "%s/%s" % (ps_TargetPath,hashlib.md5(id3_fullFile.album).hexdigest())
-
-            # New dir ?
-            if not os.path.exists(s_TargetDir):
-                os.makedirs(s_TargetDir)
-
-            shutil.copy2( s_FullFile , "%s/"%(s_TargetDir) )
-            os.rename( "%s/%s%s"%(ps_TargetPath,s_Name,s_Ext),  "%s/%s"%(s_TargetDir,s_NewFilename)  )
-
-        except (shutil.Error, IOError) as e:
-
-            print "Failed to process: %s - New File: %s" %(s_FullFile,s_NewFilename)
-            print(traceback.format_exc())
-            pass
 
 
 

@@ -36,7 +36,7 @@ def ProcessDirectory(ps_SourcePath="", ps_TargetPath="./"):
             bin_coverArt    = None
             s_coverArtType  = "jpg"
 
-            if s_Ext == ".m4a":
+            if s_Ext == ".m4a" or s_Ext == ".mp4":
 
                 m4a_fullFile = mp4.MP4(s_FullFile)
                 #s_Album = m4a_fullFile.tags['\xa9alb'][0].encode("utf-8", "ignore")
