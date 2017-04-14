@@ -8,7 +8,10 @@ import hashlib
 import shutil
 import traceback
 import glob
-from mutagen import id3, File, m4a, aiff, mp4
+from mutagen import id3, File, m4a, aiff, mp4, flac
+
+reload(sys)  
+sys.setdefaultencoding('utf8')
 
 def _usage():
     s_help = "Usage:  m3u2f3 playlist_name target_directory\n"
@@ -21,7 +24,7 @@ def _usage():
 def ProcessFile(ps_TargetPath, ps_MusicFile):
 
     # Let's rock
-    s_FullFile = os.path.abspath(ps_MusicFile)
+    s_FullFile = os.path.abspath(ps_MusicFile).decode("iso-8859-1","ignore")
     print "Processing: %s" %( s_FullFile)
     s_Name, s_Ext = os.path.splitext(s_FullFile)
     _, s_Name = os.path.split(s_Name)
@@ -66,6 +69,15 @@ def ProcessFile(ps_TargetPath, ps_MusicFile):
                     if "png" in id3_fullFile[k].mime:
                         s_coverArtType = "png"
                     break
+
+        elif s_Ext == ".flac":
+
+            id3_fullFile = flac.FLAC(s_FullFile)
+#            pprint.pprint(id3_fullFile.tags['album'][0])
+            s_Album = id3_fullFile.tags['album'][0]
+            bin_coverArt  = id3_fullFile.pictures[0].data
+            if "png" in id3_fullFile.pictures[0].mime:
+                s_coverArtType = "png"
 
         elif s_Ext == ".dsf":
             print "Ignoring DSF extension"
@@ -115,10 +127,6 @@ def ProcessPlayList(ps_PlayList="", ps_TargetPath="./"):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) < 3:
-        sys.stderr.write("Missing Parameters\n")
-        sys.exit(1)
-
     s_Options = "h"
     s_LongOptions = ["help"]
 
@@ -138,6 +146,11 @@ if __name__ == "__main__":
         if o in ("-h", "--help"):
             _usage()
             sys.exit(1)
+
+    if len(sys.argv) < 3:
+        sys.stderr.write("Missing Parameters\n")
+        sys.exit(1)
+
 
     try:
         s_PlayList = args[0]
