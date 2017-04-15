@@ -24,7 +24,7 @@ def _usage():
 def ProcessFile(ps_TargetPath, ps_MusicFile):
 
     # Let's rock
-    s_FullFile = os.path.abspath(ps_MusicFile).decode("iso-8859-1","ignore")
+    s_FullFile = os.path.abspath(ps_MusicFile).decode("iso-8859-1").encode("utf-8","ignore")
     print "Processing: %s" %( s_FullFile)
     s_Name, s_Ext = os.path.splitext(s_FullFile)
     _, s_Name = os.path.split(s_Name)
