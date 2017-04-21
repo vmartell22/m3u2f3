@@ -24,7 +24,7 @@ def _usage():
 def ProcessFile(ps_TargetPath, ps_MusicFile):
 
     # Let's rock
-    s_FullFile = os.path.abspath(ps_MusicFile).decode("iso-8859-1").encode("utf-8","ignore")
+    s_FullFile = os.path.abspath(ps_MusicFile).encode("iso-8859-1").decode("utf-8","ignore")
     print "Processing: %s" %( s_FullFile)
     s_Name, s_Ext = os.path.splitext(s_FullFile)
     _, s_Name = os.path.split(s_Name)
@@ -97,6 +97,8 @@ def ProcessFile(ps_TargetPath, ps_MusicFile):
             os.makedirs(s_TargetDir)
             if bin_coverArt is not None:
                 with open("%s/folder.%s"%(s_TargetDir,s_coverArtType), 'wb') as file_coverArt:
+                    file_coverArt.write(bin_coverArt)
+                with open("%s/cover.%s"%(s_TargetDir,s_coverArtType), 'wb') as file_coverArt:
                     file_coverArt.write(bin_coverArt)
 
         shutil.copy2( s_FullFile , "%s/"%(s_TargetDir) )
