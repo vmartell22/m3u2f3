@@ -8,10 +8,12 @@ import hashlib
 import shutil
 import traceback
 import glob
+import io
 from mutagen import id3, File, m4a, aiff, mp4, flac
 
+
 reload(sys)  
-sys.setdefaultencoding('utf8')
+#sys.setdefaultencoding('iso-8859-1')
 
 def _usage():
     s_help = "Usage:  m3u2f3 playlist_name target_directory\n"
@@ -24,12 +26,14 @@ def _usage():
 def ProcessFile(ps_TargetPath, ps_MusicFile):
 
     # Let's rock
-    s_FullFile = os.path.abspath(ps_MusicFile).encode("iso-8859-1").decode("utf-8","ignore")
-    print "Processing: %s" %( s_FullFile)
+    #s_FullFile = os.path.abspath(ps_MusicFile).encode("iso-8859-1").decode("utf-8","ignore")
+    #s_FullFile = os.path.abspath(ps_MusicFile).decode("iso-8859-1","ignore")
+    s_FullFile = os.path.abspath(ps_MusicFile)
+    print "Processing: %s" %( s_FullFile.encode("utf-8", "ignore") )
     s_Name, s_Ext = os.path.splitext(s_FullFile)
     _, s_Name = os.path.split(s_Name)
-    print s_Name
-    s_NewFilename = "%s%s" %(hashlib.md5(s_FullFile).hexdigest(),s_Ext)
+    print s_Name.encode("utf-8", "ignore")
+    s_NewFilename = "%s%s" %(hashlib.md5(s_FullFile.encode("utf-8", "ignore")).hexdigest(),s_Ext)
 
     try:
 
@@ -73,7 +77,7 @@ def ProcessFile(ps_TargetPath, ps_MusicFile):
         elif s_Ext == ".flac":
 
             id3_fullFile = flac.FLAC(s_FullFile)
-#            pprint.pprint(id3_fullFile.tags['album'][0])
+#           pprint.pprint(id3_fullFile.tags['album'][0])
             s_Album = id3_fullFile.tags['album'][0]
             bin_coverArt  = id3_fullFile.pictures[0].data
             if "png" in id3_fullFile.pictures[0].mime:
@@ -89,7 +93,7 @@ def ProcessFile(ps_TargetPath, ps_MusicFile):
 
         s_TargetDir = "%s/%s" % (ps_TargetPath,hashlib.md5(s_Album.encode("utf-8","ignore")).hexdigest())
 
-        print "Album: %s Targedir: %s" %(s_Album,s_TargetDir)
+        print "Album: %s Targedir: %s" %(s_Album.encode("utf-8", "ignore"),s_TargetDir)
 
         # New dir ?
         if not os.path.exists(s_TargetDir):
@@ -116,15 +120,12 @@ def ProcessFile(ps_TargetPath, ps_MusicFile):
 def ProcessPlayList(ps_PlayList="", ps_TargetPath="./"):
 
     # Loading Playlist
-    with open(ps_PlayList) as INF:
+    with io.open(ps_PlayList, encoding='utf-16') as INF:
         MUSIC_FILES = [LINE.strip() for LINE in INF.readlines() if not LINE.startswith('#')]
 
     # Let's rock
     for s_MusicFile in MUSIC_FILES:
-
         s_FullFile = ProcessFile(ps_TargetPath, s_MusicFile )
-
-
 
 
 if __name__ == "__main__":
